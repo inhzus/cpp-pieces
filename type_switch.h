@@ -19,7 +19,7 @@ struct remove_class<R(C::*)(A...) const volatile> { using type = R(A...); };
 template<typename T>
 struct get_signature_impl {
   using type = typename remove_class<
-      decltype(&std::remove_reference<T>::type::operator())>::type;
+      decltype(&std::remove_reference_t<T>::operator())>::type;
 };
 template<typename R, typename... A>
 struct get_signature_impl<R(A...)> { using type = R(A...); };
@@ -29,7 +29,8 @@ template<typename R, typename... A>
 struct get_signature_impl<R(*)(A...)> { using type = R(A...); };
 template<typename T> using get_signature = typename get_signature_impl<T>::type;
 
-template<class Base, class Derived>
+template<class Base, class Derived,
+    std::enable_if_t<std::is_base_of_v<Base, Derived>, int> = 0>
 bool type_switch_helper(Base *base, std::function<void(Derived *)> function) {
   if (auto entity = dynamic_cast<Derived *>(base)) {
     function(entity);
@@ -50,7 +51,7 @@ void type_switch(Base *base, FirstFunction &&function,
 }
 
 template<class Base>
-void type_switch(Base *base) {}
+void type_switch(Base *) {}
 
 class Animal {
  public:
